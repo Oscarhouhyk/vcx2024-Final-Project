@@ -54,71 +54,99 @@ namespace VCX::Labs::Rendering {
 
     glm::vec3 RayTrace(const RayIntersector & intersector, Ray ray, int maxDepth, bool enableShadow) {
  glm::vec3 color(0.0f);
-    glm::vec3 throughput(1.0f); // 光线的累积贡献
+        glm::vec3 weight(1.0f);
 
-    for (int depth = 0; depth < maxDepth; depth++) {
-        auto rayHit = intersector.IntersectRay(ray);
-        if (!rayHit.IntersectState) break; // 如果没有交点，返回背景色
+        for (int depth = 0; depth < maxDepth; depth++) {
+            auto rayHit = intersector.IntersectRay(ray);
+            if (! rayHit.IntersectState) return color;
+            const glm::vec3 pos       = rayHit.IntersectPosition;
+            const glm::vec3 n         = rayHit.IntersectNormal;
+            const glm::vec3 kd        = rayHit.IntersectAlbedo;
+            const glm::vec3 ks        = rayHit.IntersectMetaSpec;
+            const float     alpha     = rayHit.IntersectAlbedo.w;
+            const float     shininess = rayHit.IntersectMetaSpec.w * 256;
 
-        // 获取交点的材质属性
-        const glm::vec3 pos   = rayHit.IntersectPosition;
-        const glm::vec3 n     = rayHit.IntersectNormal;
-        const glm::vec3 kd    = rayHit.IntersectAlbedo;       // 漫反射
-        const glm::vec3 ks    = rayHit.IntersectMetaSpec;     // 镜面反射
-        const float     alpha = rayHit.IntersectAlbedo.w;     // 透明度（折射相关）
+            glm::vec3 result(0.0f);
+            /******************* 2. Whitted-style ray tracing *****************/
+            // your code here
 
-        // 直接光照：计算光源的贡献
-        glm::vec3 directLight(0.0f);
-        for (const Engine::Light & light : intersector.InternalScene->Lights) {
-            glm::vec3 l;
-            float attenuation;
+            glm::vec3 ambient = intersector.InternalScene->AmbientIntensity * kd;
+            result += ambient;
 
-            if (light.Type == Engine::LightType::Point) {
-                l           = light.Position - pos;
-                attenuation = 1.0f / glm::dot(l, l);
-            } else if (light.Type == Engine::LightType::Directional) {
-                l           = light.Direction;
-                attenuation = 1.0f;
+            for (const Engine::Light & light : intersector.InternalScene->Lights) {
+                glm::vec3 l;
+                float     attenuation;
+                /******************* 3. Shadow ray *****************/
+                if (light.Type == Engine::LightType::Point) {
+                    l           = light.Position - pos;
+                    attenuation = 1.0f / glm::dot(l, l);
+                    if (enableShadow) {
+                        // your code here
+                        Ray shadowRay(pos, glm::normalize(l));
+                        auto hit = intersector.IntersectRay(shadowRay);
+                        while (hit.IntersectState && hit.IntersectAlbedo.w < 0.2f) {
+                            Ray secondRay(hit.IntersectPosition, glm::normalize(l));
+                            hit = intersector.IntersectRay(secondRay);
+                        }
+                        if (hit.IntersectState) {
+                            glm::vec3 intersectPt = hit.IntersectPosition - pos;
+                            if(glm::dot(intersectPt, intersectPt) < glm::dot(l, l))
+                                attenuation = 0.0f;
+                        }
+
+                    }
+                } else if (light.Type == Engine::LightType::Directional) {
+                    l           = light.Direction;
+                    attenuation = 1.0f;
+                    if (enableShadow) {
+                        // your code here
+
+                        Ray shadowRay(pos, glm::normalize(l));
+                        auto hit = intersector.IntersectRay(shadowRay);
+                        while (hit.IntersectState && hit.IntersectAlbedo.w < 0.2f) {
+                            Ray secondRay(hit.IntersectPosition, glm::normalize(l));
+                            hit = intersector.IntersectRay(secondRay);
+                        }
+                        if (hit.IntersectState) {
+                            glm::vec3 intersectPt = hit.IntersectPosition - pos;
+                            if(glm::dot(intersectPt, intersectPt) < glm::dot(l, l))
+                                attenuation = 0.0f;
+                        }
+                
+                    }
+                }
+
+                /******************* 2. Whitted-style ray tracing *****************/
+                // your code here
+                glm::vec3 viewDir = -ray.Direction;
+                glm::vec3 diffuse  = kd * glm::max(glm::dot(glm::normalize(l),glm::normalize(n)), 0.0f) * light.Intensity * attenuation;
+                glm::vec3 specular = ks * glm::pow(glm::max(0.0f, glm::dot(glm::normalize(n), glm::normalize(viewDir + glm::normalize(l)))), shininess) * light.Intensity * attenuation;
+                result += diffuse + specular;
+
             }
 
-            if (enableShadow) {
-                Ray shadowRay(pos + 1e-4f * n, glm::normalize(l));
-                auto shadowHit = intersector.IntersectRay(shadowRay);
-                if (shadowHit.IntersectState) continue; // 阴影阻挡，跳过当前光源
+            if (alpha < 0.9) {
+                // refraction
+                // accumulate color
+                glm::vec3 R = alpha * glm::vec3(1.0f);
+                color += weight * R * result;
+                weight *= glm::vec3(1.0f) - R;
+
+                // generate new ray
+                ray = Ray(pos, ray.Direction);
+            } else {
+                // reflection
+                // accumulate color
+                glm::vec3 R = ks * glm::vec3(0.5f);
+                color += weight * (glm::vec3(1.0f) - R) * result;
+                weight *= R;
+
+                // generate new ray
+                glm::vec3 out_dir = ray.Direction - glm::vec3(2.0f) * n * glm::dot(n, ray.Direction);
+                ray               = Ray(pos, out_dir);
             }
-
-            glm::vec3 lightDir = glm::normalize(l);
-            float NdotL = glm::max(glm::dot(n, lightDir), 0.0f);
-
-            // 漫反射 + 镜面反射
-            glm::vec3 diffuse  = kd * NdotL * light.Intensity * attenuation;
-            glm::vec3 specular = ks * glm::pow(glm::max(0.0f, glm::dot(glm::reflect(-lightDir, n), -ray.Direction)), 16.0f) * light.Intensity * attenuation;
-
-            directLight += diffuse + specular;
         }
 
-        // 累加直接光照
-        color += throughput * directLight;
-
-        // 间接光照：基于材质类型决定反射或折射方向
-        float p = glm::max(kd.r, glm::max(kd.g, kd.b)); // 俄罗斯轮盘概率
-        if (depth > 3 && glm::linearRand(0.0f, 1.0f) >= p) break; // 终止递归
-        throughput /= p; // 补偿被终止路径的贡献
-
-        if (alpha < 0.9f) {
-            // 折射逻辑
-            glm::vec3 refractedDir = glm::refract(ray.Direction, n, 1.0f / 1.5f); // 假设折射率为 1.5
-            ray = Ray(pos - 1e-4f * n, refractedDir);
-        } else {
-            // 反射逻辑
-            glm::vec3 reflectedDir = glm::reflect(ray.Direction, n);
-            ray = Ray(pos + 1e-4f * n, reflectedDir);
-        }
-
-        // 更新光线的贡献
-        throughput *= kd; // 假设材质的反射率与漫反射颜色一致
-    }
-
-    return color;
+        return color;
     }
 } // namespace VCX::Labs::Rendering
