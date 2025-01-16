@@ -29,7 +29,7 @@ PCF是一种滤波采样器，原理是在对阴影贴图进行采样时，对UV
 
 PCF可以以较小的代价得到软阴影的效果，但没有考虑软阴影的程度变化，所使用的PCF滤波核大小（默认圆盘半径 10）以及采样点数量（默认 50）需要在程序内指定以及根据具体场景变化做出适当调整以达到最佳效果，因此只使用PCF进行阴影渲染还不能准确模拟现实世界中的软阴影效果。
 
-#### 效果图
+#### 效果图 (FPS 30+)
 
 **Uniform Disk Sampling:**
 | Filter Radius = 5 | Filter Radius = 20 |
@@ -61,7 +61,7 @@ $$ W_{penumbra} = \frac{W_{Light} \cdot (d_{Receiver} - d_{Occluder})}{d_{Occlud
 2. 计算 Penumbra 作为阴影虚实程度系数
 3. 传递参数进行 PCF
 
-#### 效果图 
+#### 效果图 (FPS 30+)
 由于项目加载的模型中，只有 ```white_oak``` 物体较大，可以形成较远的阴影，结果较为明显，可见离树本体越近的阴影较为锐利，远处较为模糊。可以观察到 ``` teapot ``` 的边缘处也有较为明显的模糊滤波处理，生硬的锯齿感有所降低。(Filter Radius = 50)
 | Hard Shadow | PCSS |
 |:---:|:---:|
@@ -75,7 +75,7 @@ Lab3 中 Shadow Mapping框架已包含了对阴影添加偏置量去除自遮挡
 
 在项目中，最终计算出的 bias 会乘上一个很小的 bias constant （默认 0.02），可以在 UI 被实时调整以实现最佳渲染效果。注意较大的 bias 值可能导致过度矫正带来的阴影缺失结果,甚至完全消失，较小的值又可能起不到改善自遮挡的效果。
 
-#### 效果图 (soft shadow PCF, uniform sampling)
+#### 效果图 (FPS 30+)
 | bias_constant = 0.02 | bias_constant = 0.10 |
 |:---:|:---:|
 |<img src= "result_img/final_teapot_soft_bias002.png" width = 362>|<img src= "result_img/final_teapot_soft_bias010.png" width = 362>|
@@ -87,7 +87,7 @@ Lab3 中 Shadow Mapping框架已包含了对阴影添加偏置量去除自遮挡
 本项目实现 Hard shadow 以及 Soft Shadow 集成在一个 Case 中。 
 
 ### 选项栏
-<img src= "result_img/ui.png" height = 224>
+<img src= "result_img/ui.png" height = 350>
 
 1. 基础选项：场景 (teapot, bunny, sport_car, white_oak)，其中 teapot，bunny 添加了地面；抗锯齿；保存图片；Ease Touch.
 2. 硬 / 软阴影选项
