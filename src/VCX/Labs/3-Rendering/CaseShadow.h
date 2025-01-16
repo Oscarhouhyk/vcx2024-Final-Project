@@ -45,6 +45,7 @@ namespace VCX::Labs::Rendering {
         //float                            _frustrumSize {400.0f};
         //float                            _lightworldSize {5.0f};
         //int                              _poissonRingSize { 1 };
+        bool                              _enableZoom { false };
 
         char const *          GetSceneName(std::size_t const i) const { return Content::SceneNames[std::size_t(_scenes[i])].c_str(); }
         Engine::Scene const & GetScene(std::size_t const i) const { return Content::Scenes[std::size_t(_scenes[i])]; }

@@ -150,7 +150,7 @@ float findBlocker(sampler2D shadowMap, vec2 uv, float zReceiver) {
 
   //float searchRadius = lightSize_uv * (v_LightSpacePosition.z - NEAR_PLANE) / v_LightSpacePosition.z;
   
-  float searchRadius = 1.0 / SHADOW_MAP_SIZE * FILTER_RADIUS;
+  float searchRadius = FILTER_RADIUS / SHADOW_MAP_SIZE ;
 
   for(int i = 0; i < SAMPLE_SIZE; i++){
     float shadow_depth = unpack(texture(shadowMap, uv + poissonDisk[i] * searchRadius));

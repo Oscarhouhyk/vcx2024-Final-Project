@@ -92,6 +92,7 @@ namespace VCX::Labs::Rendering {
         ImGui::Spacing();
 
         if (ImGui::CollapsingHeader("Control")) {
+            ImGui::Checkbox("Zoom Tooltip", &_enableZoom);
             ImGui::Checkbox("Ease Touch", &_cameraManager.EnableDamping);
         }
         ImGui::Spacing();
@@ -218,5 +219,7 @@ namespace VCX::Labs::Rendering {
 
     void CaseShadow::OnProcessInput(ImVec2 const & pos) {
         _cameraManager.ProcessInput(_sceneObject.Camera, pos);
+        if(_enableZoom)
+            Common::ImGuiHelper::ZoomTooltip(_frame.GetColorAttachment(), _frame.GetSize(), pos, true);
     }
 } // namespace VCX::Labs::Rendering
