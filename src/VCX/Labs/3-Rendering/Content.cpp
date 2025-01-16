@@ -64,6 +64,12 @@ namespace VCX::Labs::Rendering {
             } else if (i == std::size_t(Assets::ExampleScene::WhiteOak)) {
                 AddGround(scenes[i], -10.);
             }
+            else if (i == std::size_t(Assets::ExampleScene::Teapot)) {
+                AddGround(scenes[i]);
+            }
+            else if (i == std::size_t(Assets::ExampleScene::Bunny)) {
+                AddGround(scenes[i]);
+            }
         }
         return scenes;
     }

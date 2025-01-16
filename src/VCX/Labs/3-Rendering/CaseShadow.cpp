@@ -57,9 +57,37 @@ namespace VCX::Labs::Rendering {
         ImGui::Combo("Anti-Aliasing", &_msaa, "None\0002x MSAA\0004x MSAA\0008x MSAA\0");
         Common::ImGuiHelper::SaveImage(_frame.GetColorAttachment(), _frame.GetSize(), true);
         ImGui::Spacing();
+        _uniformDirty |= ImGui::RadioButton("Hard Shadow", &_useSoftShadow, 0);
+        ImGui::SameLine();
+        _uniformDirty |= ImGui::RadioButton("Soft Shadow", &_useSoftShadow, 1);
+        ImGui::Spacing();
+
+        _uniformDirty |= ImGui::RadioButton("PCF", &_usePCF, 1);
+        ImGui::SameLine();
+        _uniformDirty |= ImGui::RadioButton("PCSS", &_usePCF, 0);
+        ImGui::Spacing();
 
         if (ImGui::CollapsingHeader("Appearance", ImGuiTreeNodeFlags_DefaultOpen)) {
             _uniformDirty |= ImGui::SliderFloat("Ambient", &_ambientScale, 0.f, 2.f, "%.2fx");
+            ImGui::Spacing();
+
+            _uniformDirty |= ImGui::RadioButton("Uniform Sample", &_useUniform, 1);
+            ImGui::SameLine();
+            _uniformDirty |= ImGui::RadioButton("Poisson Sample", &_useUniform, 0);
+            ImGui::Spacing();
+
+
+            _uniformDirty |= ImGui::SliderFloat("PCF Bias", &_pcfBiasC, 0.00f, 0.10f, "%.2f");
+            ImGui::Spacing();
+
+            _uniformDirty |= ImGui::SliderFloat("Filter Radius", &_filterRadius, 5.0f, 50.0f, "%.0f");
+           
+           //_uniformDirty |= ImGui::SliderFloat("Frustrum Size", &_frustrumSize, 0.00f, 1000.0f, "%.0f");
+
+           //_uniformDirty |= ImGui::SliderFloat("Light World Size", &_lightworldSize, 0.00f, 100.0f, "%.0f");
+
+           // _uniformDirty |= ImGui::SliderInt("Poisson Ring", &_poissonRingSize, 0, 100);
+    
         }
         ImGui::Spacing();
 
@@ -118,6 +146,22 @@ namespace VCX::Labs::Rendering {
 
             _shadingProgram.GetUniforms().SetByName("u_AmbientScale", _ambientScale);
             _shadingCubeProgram.GetUniforms().SetByName("u_AmbientScale", _ambientScale);
+            _shadingProgram.GetUniforms().SetByName("u_useUniform", _useUniform);
+            _shadingCubeProgram.GetUniforms().SetByName("u_useUniform", _useUniform);
+            _shadingProgram.GetUniforms().SetByName("u_useSoftShadow", _useSoftShadow);
+            _shadingCubeProgram.GetUniforms().SetByName("u_useSoftShadow", _useSoftShadow);
+
+            _shadingProgram.GetUniforms().SetByName("pcfBiasC", _pcfBiasC);
+            _shadingCubeProgram.GetUniforms().SetByName("pcfBiasC", _pcfBiasC);
+            _shadingProgram.GetUniforms().SetByName("FILTER_RADIUS", _filterRadius);
+            _shadingCubeProgram.GetUniforms().SetByName("FILTER_RADIUS", _filterRadius);
+            _shadingProgram.GetUniforms().SetByName("u_usePCF", _usePCF);
+            _shadingCubeProgram.GetUniforms().SetByName("u_usePCF", _usePCF);
+            //_shadingProgram.GetUniforms().SetByName("FRUSTRUM_SIZE", _frustrumSize);
+           // _shadingCubeProgram.GetUniforms().SetByName("FRUSTRUM_SIZE", _frustrumSize);
+            //_shadingProgram.GetUniforms().SetByName("LIGHT_WORLD_SIZE", _lightworldSize);
+            //_shadingCubeProgram.GetUniforms().SetByName("LIGHT_WORLD_SIZE", _lightworldSize);
+            //_shadingProgram.GetUniforms().SetByName("poisson_ring_size", _poissonRingSize);
         }
 
         if (_sceneObject.CntPointLights > 0) { // light 0 is point light

@@ -37,6 +37,14 @@ namespace VCX::Labs::Rendering {
         bool                             _uniformDirty { true };
         int                              _msaa { 2 };
         float                            _ambientScale { 1 };
+        int                              _useUniform { 0 };
+        int                              _useSoftShadow { 0 };
+        float                            _pcfBiasC { 0.02f };
+        float                            _filterRadius { 10.0f };
+        int                              _usePCF { 1 };
+        //float                            _frustrumSize {400.0f};
+        //float                            _lightworldSize {5.0f};
+        //int                              _poissonRingSize { 1 };
 
         char const *          GetSceneName(std::size_t const i) const { return Content::SceneNames[std::size_t(_scenes[i])].c_str(); }
         Engine::Scene const & GetScene(std::size_t const i) const { return Content::Scenes[std::size_t(_scenes[i])]; }
